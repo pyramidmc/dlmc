@@ -3,6 +3,9 @@ import { MinecraftJSON } from "./util/mcjson";
 import { platform, arch } from 'os';
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto'
+import { downloadWithRetry } from "./util/fileDl";
+import { getLastUrlSegment } from "./util/functions";
+import { InstallerConstructorData, InstallerInstallOpts, DownloadList } from "./util/types";
 
 export class Installer {
     private version: string;
@@ -113,24 +116,21 @@ export class Installer {
         console.log(`Downloading ${totalFiles} files...`)
         // download the files
         let progress = 0;
-        const limit = pLimit(15);
+        const limit = pLimit(10);
         const downloadPromises = list.map((file) => {
             return limit(async () => {
                 const buffer = await downloadWithRetry(file);
 
-                let isAsset = false
                 switch (file.type) {
                     case 'lib':
                         await fs.mkdir(`./.minecraft/libraries/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
                         await fs.writeFile(`./.minecraft/libraries/${file.path}`, Buffer.from(buffer));
                         break;
                     case 'assetIndex':
-                        isAsset = true
                         await fs.mkdir(`./.minecraft/assets/indexes`, { recursive: true });
                         await fs.writeFile(`./.minecraft/assets/indexes/${getLastUrlSegment(file.url)}`, Buffer.from(buffer));
                         break;
                     case 'asset':
-                        isAsset = true
                         await fs.mkdir(`./.minecraft/assets/objects/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
                         await fs.writeFile(`./.minecraft/assets/objects/${file.path}`, Buffer.from(buffer));
                         break;
@@ -139,12 +139,10 @@ export class Installer {
                         await fs.writeFile(`./.minecraft/versions/${this.version}/${this.version}.jar`, Buffer.from(buffer));
                         break;
                     case 'log':
-                        isAsset = true
                         await fs.mkdir(`./.minecraft/assets/log_configs`, { recursive: true });
                         await fs.writeFile(`./.minecraft/assets/log_configs/${file.fileName}`, Buffer.from(buffer));
                         break;
                     case 'clientJson':
-                        isAsset = true
                         await fs.mkdir(`./.minecraft/versions/${this.version}`, { recursive: true });
                         await fs.writeFile(`./.minecraft/versions/${this.version}/${this.version}.json`, Buffer.from(buffer));
                         break;
@@ -161,64 +159,5 @@ export class Installer {
     }
 }
 
-interface InstallerConstructorData {
-    // version of the minecraft version to install
-    version: string;
-    // url to the minecraft json file
-    url: string;
-}
 
-interface InstallerInstallOpts {
-    onStart(): void;
-    onProgress(progress: number): void;
-    onFinish(): void;
-    onError(error: Error): void;
-}
 
-interface DownloadList {
-    url: string;
-    sha1: string;
-    size: number;
-    path?: string;
-    fileName?: string;
-    type: 'lib' | 'assetIndex' | 'jar' | 'log' | 'asset' | 'clientJson';
-}
-
-function getLastUrlSegment(url: string) {
-    return new URL(url).pathname.split('/').filter(Boolean).pop();
-}
-
-async function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function fetchFile(file: DownloadList) {
-  const response = await fetch(file.url);
-  const buffer = await response.arrayBuffer();
-  const sha1 = await crypto.subtle.digest("SHA-1", buffer);
-  const hashArray = Array.from(new Uint8Array(sha1));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  if (hashHex !== file.sha1) {
-    console.log(
-      `Hash mismatch for ${file.url}! Expected ${file.sha1} but got ${hashHex}`
-    );
-  }
-  return buffer;
-}
-
-async function downloadWithRetry(file: any): Promise<ArrayBuffer> {
-    for (let i = 0; i < 5; i++) {
-        try {
-            return await fetchFile(file);
-        } catch (e) {
-            console.log('Error downloading file, retrying in 500ms...')
-            await sleep(500);
-            if (i === 4) { // if this was the 5th attempt
-                throw new Error(`Failed to download file after 5 attempts: ${file.path}`);
-            }
-        }
-    }
-    throw new Error(`Failed to download file: ${file.path}`);
-}

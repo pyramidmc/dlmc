@@ -1,5 +1,5 @@
 {
-  "name": "typescript-lib-init",
+  "name": "@pyramidmc/dlmc",
   "version": "1.0.0",
   "scripts": {
     "test": "vitest --config ./vitest.config.ts run",
@@ -22,7 +22,7 @@
     "LICENSE",
     "package.json"
   ],
-  "repository": "https://github.com/SrIzan10/ts-lib-boilerplate.git",
+  "repository": "https://github.com/pyramidmc/dlmc.git",
   "author": "Izan Gil <66965250+SrIzan10@users.noreply.github.com>",
   "license": "MIT",
   "devDependencies": {

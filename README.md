@@ -1,2 +1,5 @@
-# ts-lib-boilerplate
-A simple typescript library boilerplate with testing and useful stuff
+# dlmc
+
+downloads minecraft versions in their correct dirs
+
+api docs soon, read the code for now
