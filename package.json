@@ -1,6 +1,6 @@
 {
   "name": "@pyramidmc/dlmc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scripts": {
     "test": "vitest --config ./vitest.config.ts run",
     "build": "tsup",
@@ -35,7 +35,6 @@
     "vitest": "^1.5.3"
   },
   "dependencies": {
-    "es6-promise-pool": "^2.5.0",
-    "p-limit": "^5.0.0"
+    "p-limit": "^3.1.0"
   }
 }
