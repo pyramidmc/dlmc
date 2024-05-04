@@ -10,9 +10,11 @@ import { InstallerConstructorData, InstallerInstallOpts, DownloadList } from "./
 export class Installer {
     private version: string;
     private url: string;
+    private path: string;
     constructor(data: InstallerConstructorData) {
         this.version = data.version;
         this.url = data.url;
+        this.path = data.path.endsWith('/') ? data.path.slice(0, -1) : data.path;
     }
 
     async install(installOpts: InstallerInstallOpts) {
@@ -123,28 +125,28 @@ export class Installer {
 
                 switch (file.type) {
                     case 'lib':
-                        await fs.mkdir(`./.minecraft/libraries/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/libraries/${file.path}`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/libraries/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
+                        await fs.writeFile(`${this.path}/libraries/${file.path}`, Buffer.from(buffer));
                         break;
                     case 'assetIndex':
-                        await fs.mkdir(`./.minecraft/assets/indexes`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/assets/indexes/${getLastUrlSegment(file.url)}`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/assets/indexes`, { recursive: true });
+                        await fs.writeFile(`${this.path}/assets/indexes/${getLastUrlSegment(file.url)}`, Buffer.from(buffer));
                         break;
                     case 'asset':
-                        await fs.mkdir(`./.minecraft/assets/objects/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/assets/objects/${file.path}`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/assets/objects/${file.path!.split('/').slice(0, -1).join('/')}`, { recursive: true });
+                        await fs.writeFile(`${this.path}/assets/objects/${file.path}`, Buffer.from(buffer));
                         break;
                     case 'jar':
-                        await fs.mkdir(`./.minecraft/versions/${this.version}`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/versions/${this.version}/${this.version}.jar`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/versions/${this.version}`, { recursive: true });
+                        await fs.writeFile(`${this.path}/versions/${this.version}/${this.version}.jar`, Buffer.from(buffer));
                         break;
                     case 'log':
-                        await fs.mkdir(`./.minecraft/assets/log_configs`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/assets/log_configs/${file.fileName}`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/assets/log_configs`, { recursive: true });
+                        await fs.writeFile(`${this.path}/assets/log_configs/${file.fileName}`, Buffer.from(buffer));
                         break;
                     case 'clientJson':
-                        await fs.mkdir(`./.minecraft/versions/${this.version}`, { recursive: true });
-                        await fs.writeFile(`./.minecraft/versions/${this.version}/${this.version}.json`, Buffer.from(buffer));
+                        await fs.mkdir(`${this.path}/versions/${this.version}`, { recursive: true });
+                        await fs.writeFile(`${this.path}/versions/${this.version}/${this.version}.json`, Buffer.from(buffer));
                         break;
                 }
 

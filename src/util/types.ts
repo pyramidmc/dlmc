@@ -3,6 +3,8 @@ export interface InstallerConstructorData {
     version: string;
     // url to the minecraft json file
     url: string;
+    // path to install the minecraft version
+    path: string;
 }
 
 export interface InstallerInstallOpts {
